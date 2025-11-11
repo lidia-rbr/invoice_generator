@@ -1,0 +1,17 @@
+﻿# root ignores
+.DS_Store
+.env
+.env.*
+.vscode
+node_modules
+dist
+build
+coverage
+
+# frontend
+/invoice-gen/node_modules
+/invoice-gen/dist
+
+# api
+/invoice-api-firestore/node_modules
+/invoice-api-firestore/.env

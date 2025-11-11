@@ -1,0 +1,19 @@
+# common junk
+node_modules
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+.DS_Store
+.env
+.env.*
+.vscode
+.git
+.gitignore
+coverage
+dist
+build
+
+# ignore the frontend if you ever run from repo root by mistake
+../invoice-gen
+../../invoice-gen
+    
