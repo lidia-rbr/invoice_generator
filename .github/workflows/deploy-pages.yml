@@ -1,4 +1,8 @@
-﻿name: Deploy UI to GitHub Pages
+﻿cd "C:\Users\Pro\Desktop\Folders\Invoices_Generator"
+mkdir .github\workflows -Force
+
+# create the workflow file
+'name: Deploy UI to GitHub Pages
 on:
   push:
     branches: [ main ]
@@ -45,4 +49,8 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+' | Set-Content -Encoding UTF8 .github\workflows\deploy-pages.yml
 
+git add .github/workflows/deploy-pages.yml
+git commit -m "ci: deploy frontend to GitHub Pages"
+git push origin main
