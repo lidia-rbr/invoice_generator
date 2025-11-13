@@ -1,12 +1,10 @@
-﻿cd "C:\Users\Pro\Desktop\Folders\Invoices_Generator"
-mkdir .github\workflows -Force
+﻿name: Deploy UI to GitHub Pages
 
-# create the workflow file
-'name: Deploy UI to GitHub Pages
 on:
   push:
-    branches: [ main ]
-    paths: [ "invoice-gen/**" ]
+    branches: [ master ] # Set back to 'master' based on original file
+    paths:
+      - "invoice-gen/**"
   workflow_dispatch:
 
 permissions:
@@ -19,7 +17,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VITE_API_URL: https://YOUR-CLOUD-RUN-URL
+  # Use the GitHub Secret for the API URL, as in the original file
+  VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
 jobs:
   build:
@@ -37,20 +36,20 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: cp dist/index.html dist/404.html
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: invoice-gen/dist
+          path: invoice-gen/dist  
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-' | Set-Content -Encoding UTF8 .github\workflows\deploy-pages.yml
-
-git add .github/workflows/deploy-pages.yml
-git commit -m "ci: deploy frontend to GitHub Pages"
-git push origin main
