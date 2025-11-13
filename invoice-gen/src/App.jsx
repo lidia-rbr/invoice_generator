@@ -456,18 +456,27 @@ export default function App() {
   const [view, setView] = useState('invoices');
 
   return (
-    <div style={{ paddingTop: '4rem', minHeight: '100vh', background: colors.pageBackground }}>
-      <NavBar setView={setView} currentView={view} />
-      {view === 'invoices' && <InvoicesView />}
-      {view === 'clients' && <ClientsView />}
+    <div style={{ paddingTop: '4rem', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+      <div style={animatedBackgroundStyle}>
+        <div className="light-orb" style={{...lightOrbStyle, top: '20%', left: '10%', animationDelay: '0s'}}></div>
+        <div className="light-orb" style={{...lightOrbStyle, top: '60%', left: '80%', animationDelay: '2s'}}></div>
+        <div className="light-orb" style={{...lightOrbStyle, top: '40%', left: '50%', animationDelay: '4s'}}></div>
+        <div className="light-orb" style={{...lightOrbStyle, top: '80%', left: '30%', animationDelay: '1s'}}></div>
+        <div className="light-orb" style={{...lightOrbStyle, top: '15%', left: '70%', animationDelay: '3s'}}></div>
+      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <NavBar setView={setView} currentView={view} />
+        {view === 'invoices' && <InvoicesView />}
+        {view === 'clients' && <ClientsView />}
+      </div>
     </div>
   );
 }
 
 // Enhanced Color Palette
 const colors = {
-  primary: '#4a90e2',
-  primaryHover: '#3a7bc8',
+  primary: '#f472b6', // Pastel Pink
+  primaryHover: '#ec4899', // Slightly darker pink for hover
   background: '#f8fafc',
   pageBackground: '#f1f5f9',
   surface: '#ffffff',
@@ -713,7 +722,7 @@ const navLinkStyle = {
 
 const navLinkActiveStyle = {
   color: colors.primary,
-  backgroundColor: "rgba(74, 144, 226, 0.1)",
+  backgroundColor: "rgba(244, 114, 182, 0.1)",
 };
 
 const linkStyle = {
@@ -749,6 +758,29 @@ const errorBannerStyle = {
   fontSize: "0.9375rem",
 };
 
+const animatedBackgroundStyle = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'linear-gradient(135deg, #f1f5f9 0%, #e0e7ff 50%, #fce7f3 100%)',
+  backgroundSize: '200% 200%',
+  animation: 'gradientShift 15s ease infinite',
+  zIndex: 0,
+};
+
+const lightOrbStyle = {
+  position: 'absolute',
+  width: '150px',
+  height: '150px',
+  borderRadius: '50%',
+  background: 'radial-gradient(circle, rgba(244, 114, 182, 0.3) 0%, rgba(244, 114, 182, 0.1) 40%, transparent 70%)',
+  filter: 'blur(20px)',
+  animation: 'floatOrb 20s ease-in-out infinite',
+  pointerEvents: 'none',
+};
+
 // Add CSS animations
 const styleSheet = document.createElement("style");
 styleSheet.textContent = `
@@ -770,7 +802,7 @@ styleSheet.textContent = `
   
   input:focus {
     border-color: ${colors.primary} !important;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.1) !important;
   }
   
   button:hover:not(:disabled) {
