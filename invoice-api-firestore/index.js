@@ -35,7 +35,7 @@ function getQuarter(isoDate) {
 async function listInvoices(q = "") {
   let query = col.orderBy("createdAt", "desc");
   if (q) {
-    // Firestore does not support case-insensitive `contains` or OR queries on different fields easily.
+    // Firestore does not support case-insensitive `contains` or OR queries on different fields easily. 
     // For a scalable solution, you would typically use a search service like Algolia or Elasticsearch,
     // or duplicate data in lowercase fields to perform case-insensitive searches.
     // This implementation is a simplified version.
@@ -69,7 +69,7 @@ async function createInvoice(payload) {
     taxe: Joi.number().default(0),
     invoiceUrl: Joi.string().uri().allow("").default(""),
   });
-
+  
   const validatedPayload = await schema.validateAsync(payload);
 
   const now = new Date().toISOString();
