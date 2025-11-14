@@ -18,9 +18,9 @@ function NavBar({ setView, currentView }) {
     <nav style={navStyle}>
       <div style={navContainerStyle}>
         <div style={{ fontWeight: "bold", fontSize: "1.25rem", color: colors.primary }}>
-          <a 
-            href="#" 
-            onClick={(e) => { e.preventDefault(); setView('invoices'); }} 
+          <a
+            href="#"
+            onClick={(e) => { e.preventDefault(); setView('invoices'); }}
             style={{ color: "inherit", textDecoration: "none", transition: "opacity 0.2s" }}
             onMouseEnter={(e) => e.target.style.opacity = "0.8"}
             onMouseLeave={(e) => e.target.style.opacity = "1"}
@@ -29,9 +29,9 @@ function NavBar({ setView, currentView }) {
           </a>
         </div>
         <div style={{ display: "flex", gap: "0.5rem" }}>
-          <a 
-            href="#" 
-            onClick={(e) => { e.preventDefault(); setView('invoices'); }} 
+          <a
+            href="#"
+            onClick={(e) => { e.preventDefault(); setView('invoices'); }}
             style={{
               ...navLinkStyle,
               ...(currentView === 'invoices' ? navLinkActiveStyle : {})
@@ -39,9 +39,9 @@ function NavBar({ setView, currentView }) {
           >
             Invoices
           </a>
-          <a 
-            href="#" 
-            onClick={(e) => { e.preventDefault(); setView('clients'); }} 
+          <a
+            href="#"
+            onClick={(e) => { e.preventDefault(); setView('clients'); }}
             style={{
               ...navLinkStyle,
               ...(currentView === 'clients' ? navLinkActiveStyle : {})
@@ -49,9 +49,9 @@ function NavBar({ setView, currentView }) {
           >
             Clients
           </a>
-          <a 
-            href="#" 
-            onClick={(e) => e.preventDefault()} 
+          <a
+            href="#"
+            onClick={(e) => e.preventDefault()}
             style={navLinkStyle}
           >
             Settings
@@ -147,7 +147,7 @@ function InvoiceForm({ onClose, onSave }) {
               <label style={labelStyle}>Taxe (73%)</label>
               <input type="text" value={calculatedValues.taxe.toFixed(2)} style={disabledInputStyle} disabled />
             </div>
-             <div style={formGroupStyle}>
+            <div style={formGroupStyle}>
               <label style={labelStyle}>Total</label>
               <input type="text" value={calculatedValues.total.toFixed(2)} style={disabledInputStyle} disabled />
             </div>
@@ -326,11 +326,11 @@ function InvoicesView() {
 
   const totals = useMemo(() => {
     return sortedRows.reduce((acc, inv) => {
-        acc.amountExcl += Number(inv.amountExcl) || 0;
-        acc.vat += Number(inv.vat) || 0;
-        acc.taxe += Number(inv.taxe) || 0;
-        acc.total += getTotal(inv);
-        return acc;
+      acc.amountExcl += Number(inv.amountExcl) || 0;
+      acc.vat += Number(inv.vat) || 0;
+      acc.taxe += Number(inv.taxe) || 0;
+      acc.total += getTotal(inv);
+      return acc;
     }, { amountExcl: 0, vat: 0, taxe: 0, total: 0 });
   }, [sortedRows]);
 
@@ -438,7 +438,7 @@ function InvoicesView() {
           </tbody>
           <tfoot>
             <tr style={{ borderTop: `2px solid ${colors.border}`, fontWeight: 'bold', background: colors.background }}>
-              <td style={{...td, textAlign: 'right'}} colSpan={5}>Total</td>
+              <td style={{ ...td, textAlign: 'right' }} colSpan={5}>Total</td>
               <td style={tdRight}>{fmt.format(totals.amountExcl)}</td>
               <td style={tdRight}>{fmt.format(totals.vat)}</td>
               <td style={tdRight}>{fmt.format(totals.taxe)}</td>
@@ -458,11 +458,11 @@ export default function App() {
   return (
     <div style={{ paddingTop: '4rem', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
       <div style={animatedBackgroundStyle}>
-        <div className="light-orb" style={{...lightOrbStyle, top: '20%', left: '10%', animationDelay: '0s'}}></div>
-        <div className="light-orb" style={{...lightOrbStyle, top: '60%', left: '80%', animationDelay: '2s'}}></div>
-        <div className="light-orb" style={{...lightOrbStyle, top: '40%', left: '50%', animationDelay: '4s'}}></div>
-        <div className="light-orb" style={{...lightOrbStyle, top: '80%', left: '30%', animationDelay: '1s'}}></div>
-        <div className="light-orb" style={{...lightOrbStyle, top: '15%', left: '70%', animationDelay: '3s'}}></div>
+        <div className="light-orb" style={{ ...lightOrbStyle, top: '20%', left: '10%', animationDelay: '0s' }}></div>
+        <div className="light-orb" style={{ ...lightOrbStyle, top: '60%', left: '80%', animationDelay: '2s' }}></div>
+        <div className="light-orb" style={{ ...lightOrbStyle, top: '40%', left: '50%', animationDelay: '4s' }}></div>
+        <div className="light-orb" style={{ ...lightOrbStyle, top: '80%', left: '30%', animationDelay: '1s' }}></div>
+        <div className="light-orb" style={{ ...lightOrbStyle, top: '15%', left: '70%', animationDelay: '3s' }}></div>
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
         <NavBar setView={setView} currentView={view} />
@@ -490,11 +490,13 @@ const colors = {
   hover: '#f8fafc',
 };
 
+
 // Enhanced Styles with Animations
 const mainContainerStyle = {
   maxWidth: 1200,
-  margin: "2rem auto",
-  padding: "0 1.5rem",
+  // width: "100%",
+  margin: "0 auto",
+  padding: "2rem 1.5rem",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   animation: "fadeIn 0.3s ease-in",
 };
