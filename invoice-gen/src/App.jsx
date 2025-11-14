@@ -494,7 +494,6 @@ const colors = {
 // Enhanced Styles with Animations
 const mainContainerStyle = {
   maxWidth: 1200,
-  // width: "100%",
   margin: "0 auto",
   padding: "2rem 1.5rem",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
