@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createInvoice, loadInvoices } from "./api";
+import { createInvoice, loadInvoices, updateInvoice } from "./api";
 
 /**
  * @typedef {Object} Invoice
@@ -404,7 +404,7 @@ function InvoiceDetailView({ invoice, onClose, onUpdate }) {
             </div>
             <div style={{ display: "flex", gap: "0.75rem" }}>
               {isEditing ? (
-                <>
+                <>  
                   <button onClick={() => setIsEditing(false)} style={buttonSecondaryStyle} disabled={isSaving}>Cancel</button>
                   <button onClick={handleSave} style={buttonPrimaryStyle} disabled={isSaving}>
                     {isSaving ? "Saving..." : "Save Changes"}
@@ -457,6 +457,18 @@ function DashboardView() {
 
   const fmt = useMemo(() => getCurrencyFormatter("fr-FR", "EUR"), []);
   const currentQuarter = useMemo(() => getQuarter(new Date().toISOString()), []);
+
+  const handleUpdateInvoice = async (updatedInvoice) => {
+    // Call the API to update the invoice on the backend
+    const savedInvoice = await updateInvoice(updatedInvoice.id, updatedInvoice);
+
+    // Update the local state to reflect the changes in the UI
+    setRows(prevRows => prevRows.map(row => 
+      row.id === savedInvoice.id ? savedInvoice : row
+    ));
+    
+    setSelectedInvoice(savedInvoice); // Keep the modal open with the latest data
+  };
 
   async function reload() {
     setErr("");
@@ -531,7 +543,7 @@ function DashboardView() {
         <h1 style={h1Style}>Dashboard - Invoices for {currentQuarter}</h1>
       </header>
 
-      {selectedInvoice && <InvoiceDetailView invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />}
+      {selectedInvoice && <InvoiceDetailView invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} onUpdate={handleUpdateInvoice} />}
       {err && <div style={errorBannerStyle}>{err}</div>}
 
       <div style={cardStyle}>
@@ -583,6 +595,18 @@ function InvoicesView() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const fmt = useMemo(() => getCurrencyFormatter("fr-FR", "EUR"), []);
+
+  const handleUpdateInvoice = async (updatedInvoice) => {
+    // Call the API to update the invoice on the backend
+    const savedInvoice = await updateInvoice(updatedInvoice.id, updatedInvoice);
+
+    // Update the local state to reflect the changes in the UI
+    setRows(prevRows => prevRows.map(row => 
+      row.id === savedInvoice.id ? savedInvoice : row
+    ));
+    
+    setSelectedInvoice(savedInvoice); // Keep the modal open with the latest data
+  };
 
   async function reload() {
     setErr("");
@@ -677,7 +701,7 @@ function InvoicesView() {
         </button>
       </header>
 
-      {selectedInvoice && <InvoiceDetailView invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />}
+      {selectedInvoice && <InvoiceDetailView invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} onUpdate={handleUpdateInvoice} />}
       {err && <div style={errorBannerStyle}>{err}</div>}
 
       <div style={searchBarStyle}>

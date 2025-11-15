@@ -38,3 +38,19 @@ export async function createInvoice(payload) {
   if (!res.ok) throw new Error(`Failed to create invoice: ${res.status}`);
   return res.json();
 }
+
+/**
+ * Update an existing invoice via the API.
+ * @param {string} id - The ID of the invoice to update.
+ * @param {object} payload - The invoice data to update.
+ * @returns {Promise<object>} The updated invoice.
+ */
+export async function updateInvoice(id, payload) {
+  const res = await fetch(`${BASE_URL}/invoices/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Failed to update invoice: ${res.status}`);
+  return res.json();
+}

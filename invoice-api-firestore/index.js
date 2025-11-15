@@ -6,7 +6,7 @@ import Joi from "joi";
 const app = express();
 
 const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173").split(",");
-app.use(cors({ origin: allowedOrigins, methods: ["GET", "POST"] }));
+app.use(cors({ origin: allowedOrigins, methods: ["GET", "POST", "PUT"] }));
 app.use(express.json());
 
 process.on('unhandledRejection', (reason, promise) => {
