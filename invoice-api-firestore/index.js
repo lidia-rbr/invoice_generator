@@ -91,6 +91,57 @@ async function createInvoice(payload) {
   return { id: ref.id, ...doc };
 }
 
+
+/**
+ * Update an invoice document.
+ *
+ * @param {string} id - Firestore document ID.
+ * @param {Partial<InvoicePayload>} payload - Fields to update.
+ * @returns {Promise<object>} Updated document (with id).
+ */
+async function updateInvoice(id, payload) {
+  // Allow partial updates
+  const schema = Joi.object({
+    code: Joi.string(),
+    customerName: Joi.string(),
+    issueDate: Joi.string().isoDate(),
+    paid: Joi.boolean(),
+    amountExcl: Joi.number(),
+    vat: Joi.number(),
+    taxe: Joi.number(),
+    invoiceUrl: Joi.string().uri().allow(""),
+  }).min(1); // must send at least one field
+
+  const validated = await schema.validateAsync(payload);
+
+  const ref = col.doc(id);
+  const snap = await ref.get();
+
+  if (!snap.exists) {
+    throw new Error("Invoice not found");
+  }
+
+  /** @type {any} */
+  const existing = snap.data();
+
+  /** @type {any} */
+  const updates = { ...validated };
+
+  // Keep derived fields in sync
+  if (typeof updates.customerName === "string") {
+    updates.customerName_lower = updates.customerName.toLowerCase();
+  }
+  if (typeof updates.issueDate === "string") {
+    updates.quarter = getQuarter(updates.issueDate);
+  }
+
+  updates.updatedAt = new Date().toISOString();
+
+  await ref.update(updates);
+
+  return { id, ...existing, ...updates };
+}
+
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.get("/invoices", async (req, res) => {
@@ -110,6 +161,21 @@ app.post("/invoices", async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(400).json({ error: e.message || "Failed to create invoice" });
+  }
+});
+
+app.put("/invoices/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await updateInvoice(id, req.body);
+    res.json(updated);
+  } catch (e) {
+    console.error(e);
+    if (e.message === "Invoice not found") {
+      res.status(404).json({ error: e.message });
+      return;
+    }
+    res.status(400).json({ error: e.message || "Failed to update invoice" });
   }
 });
 
