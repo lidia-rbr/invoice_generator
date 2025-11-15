@@ -20,7 +20,7 @@ function NavBar({ setView, currentView }) {
         <div style={{ fontWeight: "bold", fontSize: "1.25rem", color: colors.primary }}>
           <a
             href="#"
-            onClick={(e) => { e.preventDefault(); setView('invoices'); }}
+            onClick={(e) => { e.preventDefault(); setView('dashboard'); }}
             style={{ color: "inherit", textDecoration: "none", transition: "opacity 0.2s" }}
             onMouseEnter={(e) => e.target.style.opacity = "0.8"}
             onMouseLeave={(e) => e.target.style.opacity = "1"}
@@ -29,6 +29,16 @@ function NavBar({ setView, currentView }) {
           </a>
         </div>
         <div style={{ display: "flex", gap: "0.5rem" }}>
+          <a
+            href="#"
+            onClick={(e) => { e.preventDefault(); setView('dashboard'); }}
+            style={{
+              ...navLinkStyle,
+              ...(currentView === 'dashboard' ? navLinkActiveStyle : {})
+            }}
+          >
+            Dashboard
+          </a>
           <a
             href="#"
             onClick={(e) => { e.preventDefault(); setView('invoices'); }}
@@ -55,6 +65,23 @@ function NavBar({ setView, currentView }) {
             style={navLinkStyle}
           >
             Settings
+          </a>
+          <a
+            href="#"
+            onClick={(e) => { e.preventDefault(); setView('profile'); }}
+            style={{ ...navLinkStyle, padding: '0.5rem', marginLeft: '0.5rem' }}
+            title="User Profile"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 24 24" 
+              fill="currentColor" 
+              style={{ width: 24, height: 24, display: 'block' }}
+              aria-hidden="true"
+            >
+              <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clipRule="evenodd" />
+            </svg>
+            <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>User Profile</span>
           </a>
         </div>
       </div>
@@ -230,6 +257,170 @@ function ClientsView() {
   );
 }
 
+function UserProfileView() {
+  return (
+    <main style={mainContainerStyle}>
+      <header style={headerStyle}>
+        <h1 style={h1Style}>User Profile</h1>
+      </header>
+      <div style={cardStyle}>
+        <div style={{ padding: '2rem' }}>
+          <div style={formGroupStyle}>
+            <label style={labelStyle}>Username</label>
+            <input type="text" value="testuser" style={disabledInputStyle} readOnly />
+          </div>
+          <div style={{ ...formGroupStyle, marginTop: '1rem' }}>
+            <label style={labelStyle}>Password</label>
+            <input type="password" value="password" style={disabledInputStyle} readOnly />
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * A modal for displaying invoice details.
+ */
+function InvoiceDetailView({ invoice, onClose, onUpdate }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    customerName: invoice.customerName,
+    issueDate: invoice.issueDate,
+    paid: invoice.paid,
+    tjm: 0,
+    numDays: 0,
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const fmt = useMemo(() => getCurrencyFormatter("fr-FR", "EUR"), []);
+
+  const calculatedValues = useMemo(() => {
+    if (!isEditing) return null;
+    const tjm = Number(editData.tjm) || 0;
+    const numDays = Number(editData.numDays) || 0;
+    const amountExcl = tjm * numDays;
+    const vat = amountExcl * 0.2;
+    const taxe = amountExcl * 0.73;
+    const total = amountExcl * 1.2;
+    return { amountExcl, vat, taxe, total };
+  }, [editData.tjm, editData.numDays, isEditing]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSave = async () => {
+    setError("");
+    setIsSaving(true);
+    try {
+      const updatedInvoice = {
+        ...invoice,
+        ...editData,
+        ...(calculatedValues || {}),
+      };
+      await onUpdate(updatedInvoice);
+      setIsEditing(false);
+    } catch (err) {
+      setError(err.message || "Failed to update invoice.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!invoice) return null;
+
+  return (
+    <div style={modalOverlayStyle} onClick={onClose}>
+      <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+        <div>
+          <h2 style={{ marginTop: 0, marginBottom: "1.5rem", color: colors.textPrimary }}>
+            Invoice Details <span style={{ color: colors.textSecondary, fontWeight: 500 }}>({invoice.id})</span>
+          </h2>
+          {error && <div style={{ color: colors.danger, marginBottom: "1rem", padding: "0.75rem", background: "rgba(239, 68, 68, 0.1)", borderRadius: 8 }}>{error}</div>}
+          <div style={formGridStyle}>
+            <div style={formGroupStyle}>
+              <label style={labelStyle}>Customer Name</label>
+              {isEditing ? (
+                <input type="text" name="customerName" value={editData.customerName} onChange={handleChange} style={inputStyle} />
+              ) : (
+                <input type="text" value={invoice.customerName} style={disabledInputStyle} readOnly />
+              )}
+            </div>
+            <div style={formGroupStyle}>
+              <label style={labelStyle}>Issue Date</label>
+              {isEditing ? (
+                <input type="date" name="issueDate" value={editData.issueDate} onChange={handleChange} style={inputStyle} />
+              ) : (
+                <input type="text" value={formatDate(invoice.issueDate)} style={disabledInputStyle} readOnly />
+              )}
+            </div>
+            <div style={formGroupStyle}>
+              <label style={labelStyle}>Status</label>
+              {isEditing ? (
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0' }}>
+                  <input type="checkbox" name="paid" checked={editData.paid} onChange={handleChange} />
+                  <span style={{ fontSize: '0.9375rem' }}>Paid</span>
+                </label>
+              ) : (
+                <span style={{...inputStyle, background: colors.background}}><span style={invoice.paid ? statusPaid : statusUnpaid}>{invoice.paid ? "Paid" : "Unpaid"}</span></span>
+              )}
+            </div>
+            {isEditing && (
+              <>
+                <div style={formGroupStyle}>
+                  <label style={labelStyle}>TJM (Daily Rate)</label>
+                  <input type="number" name="tjm" value={editData.tjm} onChange={handleChange} style={inputStyle} step="0.01" min="0" />
+                </div>
+                <div style={formGroupStyle}>
+                  <label style={labelStyle}>Number of days</label>
+                  <input type="number" name="numDays" value={editData.numDays} onChange={handleChange} style={inputStyle} step="0.1" min="0" />
+                </div>
+              </>
+            )}
+            <div style={formGroupStyle}>
+              <label style={labelStyle}>Amount (excl. tax)</label>
+              <input type="text" value={isEditing && calculatedValues ? calculatedValues.amountExcl.toFixed(2) : fmt.format(invoice.amountExcl)} style={disabledInputStyle} readOnly />
+            </div>
+            <div style={formGroupStyle}>
+              <label style={labelStyle}>VAT</label>
+              <input type="text" value={isEditing && calculatedValues ? calculatedValues.vat.toFixed(2) : fmt.format(invoice.vat)} style={disabledInputStyle} readOnly />
+            </div>
+            <div style={formGroupStyle}>
+              <label style={labelStyle}>Total</label>
+              <input type="text" value={isEditing && calculatedValues ? calculatedValues.total.toFixed(2) : fmt.format(getTotal(invoice))} style={{...disabledInputStyle, fontWeight: 'bold'}} readOnly />
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "1.5rem" }}>
+            <div>
+              {!isEditing && (
+                <button onClick={() => setIsEditing(true)} style={buttonSecondaryStyle}>Edit</button>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              {isEditing ? (
+                <>
+                  <button onClick={() => setIsEditing(false)} style={buttonSecondaryStyle} disabled={isSaving}>Cancel</button>
+                  <button onClick={handleSave} style={buttonPrimaryStyle} disabled={isSaving}>
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                </>
+              ) : (
+                <button onClick={onClose} style={buttonPrimaryStyle}>Close</button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Returns an Intl currency formatter.
  */
@@ -257,6 +448,131 @@ function getTotal(inv) {
   return (Number(inv.amountExcl) || 0) + (Number(inv.vat) || 0) + (Number(inv.taxe) || 0);
 }
 
+function DashboardView() {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: 'issueDate', direction: 'descending' });
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  const fmt = useMemo(() => getCurrencyFormatter("fr-FR", "EUR"), []);
+  const currentQuarter = useMemo(() => getQuarter(new Date().toISOString()), []);
+
+  async function reload() {
+    setErr("");
+    setLoading(true);
+    try {
+      const data = await loadInvoices();
+      const quarterlyInvoices = data.filter(inv => getQuarter(inv.issueDate) === currentQuarter);
+      setRows(quarterlyInvoices);
+    } catch (e) {
+      console.error(e);
+      setErr("Failed to load invoices for the current quarter.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const sortedRows = useMemo(() => {
+    let sortableItems = [...rows];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        if (sortConfig.key === 'total') {
+          aValue = getTotal(a);
+          bValue = getTotal(b);
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [rows, sortConfig]);
+
+  const totals = useMemo(() => {
+    return sortedRows.reduce((acc, inv) => {
+      acc.amountExcl += Number(inv.amountExcl) || 0;
+      acc.vat += Number(inv.vat) || 0;
+      acc.taxe += Number(inv.taxe) || 0;
+      acc.total += getTotal(inv);
+      return acc;
+    }, { amountExcl: 0, vat: 0, taxe: 0, total: 0 });
+  }, [sortedRows]);
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIndicator = (key) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+  };
+
+  return (
+    <main style={mainContainerStyle}>
+      <header style={headerStyle}>
+        <h1 style={h1Style}>Dashboard - Invoices for {currentQuarter}</h1>
+      </header>
+
+      {selectedInvoice && <InvoiceDetailView invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />}
+      {err && <div style={errorBannerStyle}>{err}</div>}
+
+      <div style={cardStyle}>
+        <table style={tableStyle}>
+          <thead style={{ background: colors.background }}>
+            <tr>
+              <th style={th} onClick={() => requestSort('id')}>Invoice{getSortIndicator('id')}</th>
+              <th style={th} onClick={() => requestSort('customerName')}>Customer{getSortIndicator('customerName')}</th>
+              <th style={th} onClick={() => requestSort('issueDate')}>Date issued{getSortIndicator('issueDate')}</th>
+              <th style={th} onClick={() => requestSort('paid')}>Paid{getSortIndicator('paid')}</th>
+              <th style={thRight} onClick={() => requestSort('amountExcl')}>Amount (excl.){getSortIndicator('amountExcl')}</th>
+              <th style={thRight} onClick={() => requestSort('vat')}>VAT{getSortIndicator('vat')}</th>
+              <th style={thRight} onClick={() => requestSort('taxe')}>TAXE{getSortIndicator('taxe')}</th>
+              <th style={thRight} onClick={() => requestSort('total')}>Total{getSortIndicator('total')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={8} style={{ padding: "1.25rem", textAlign: "center", color: colors.textSecondary }}>Loading…</td></tr>}
+            {!loading && sortedRows.map((inv) => (
+              <tr key={inv.id} style={trStyle} onClick={() => setSelectedInvoice(inv)}>
+                <td style={tdMono}>{inv.id}</td>
+                <td style={td}>{inv.customerName}</td>
+                <td style={td}>{formatDate(inv.issueDate)}</td>
+                <td style={td}><span style={inv.paid ? statusPaid : statusUnpaid}>{inv.paid ? "Paid" : "Unpaid"}</span></td>
+                <td style={tdRight}>{fmt.format(Number(inv.amountExcl) || 0)}</td>
+                <td style={tdRight}>{fmt.format(Number(inv.vat) || 0)}</td>
+                <td style={tdRight}>{fmt.format(Number(inv.taxe) || 0)}</td>
+                <td style={{ ...tdRight, fontWeight: 600 }}>{fmt.format(getTotal(inv))}</td>
+              </tr>
+            ))}
+            {!loading && sortedRows.length === 0 && <tr><td colSpan={8} style={{ padding: "1.25rem", textAlign: "center", color: colors.textSecondary }}>No invoices for the current quarter.</td></tr>}
+          </tbody>
+          <tfoot>
+            <tr style={{ borderTop: `2px solid ${colors.border}`, fontWeight: 'bold', background: colors.background }}><td style={{ ...td, textAlign: 'right' }} colSpan={4}>Total</td><td style={tdRight}>{fmt.format(totals.amountExcl)}</td><td style={tdRight}>{fmt.format(totals.vat)}</td><td style={tdRight}>{fmt.format(totals.taxe)}</td><td style={{ ...tdRight, fontWeight: 600 }}>{fmt.format(totals.total)}</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </main>
+  );
+}
+
 function InvoicesView() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -264,6 +580,7 @@ function InvoicesView() {
   const [query, setQuery] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'issueDate', direction: 'descending' });
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const fmt = useMemo(() => getCurrencyFormatter("fr-FR", "EUR"), []);
 
@@ -360,6 +677,7 @@ function InvoicesView() {
         </button>
       </header>
 
+      {selectedInvoice && <InvoiceDetailView invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />}
       {err && <div style={errorBannerStyle}>{err}</div>}
 
       <div style={searchBarStyle}>
@@ -382,7 +700,7 @@ function InvoicesView() {
       <div style={cardStyle}>
         <table style={tableStyle}>
           <thead style={{ background: colors.background }}>
-            <tr style={{ cursor: 'pointer' }}>
+            <tr>
               <th style={th} onClick={() => requestSort('id')}>Invoice{getSortIndicator('id')}</th>
               <th style={th} onClick={() => requestSort('customerName')}>Customer{getSortIndicator('customerName')}</th>
               <th style={th} onClick={() => requestSort('issueDate')}>Quarter{getSortIndicator('issueDate')}</th>
@@ -404,7 +722,7 @@ function InvoicesView() {
               const total = getTotal(inv);
               const quarter = getQuarter(inv.issueDate);
               return (
-                <tr key={inv.id} style={trStyle}>
+                <tr key={inv.id} style={trStyle} onClick={() => setSelectedInvoice(inv)}>
                   <td style={tdMono}>{inv.id}</td>
                   <td style={td}>{inv.customerName}</td>
                   <td style={td}>{quarter}</td>
@@ -416,14 +734,6 @@ function InvoicesView() {
                   <td style={{ ...tdRight, fontWeight: 600 }}>{fmt.format(total)}</td>
                   <td style={td}>
                     {inv.invoiceUrl ? <a href={inv.invoiceUrl} target="_blank" rel="noreferrer" style={linkStyle}>Open</a> : <span style={{ color: colors.textSecondary }}>—</span>}
-                  </td>
-                  <td style={tdRight}>
-                    <button
-                      onClick={() => alert(`Open ${inv.id}`)}
-                      style={actionButtonStyle}
-                    >
-                      Details
-                    </button>
                   </td>
                 </tr>
               );
@@ -453,7 +763,7 @@ function InvoicesView() {
 }
 
 export default function App() {
-  const [view, setView] = useState('invoices');
+  const [view, setView] = useState('dashboard');
 
   return (
     <div style={{ paddingTop: '4rem', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -466,8 +776,10 @@ export default function App() {
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
         <NavBar setView={setView} currentView={view} />
+        {view === 'dashboard' && <DashboardView />}
         {view === 'invoices' && <InvoicesView />}
         {view === 'clients' && <ClientsView />}
+        {view === 'profile' && <UserProfileView />}
       </div>
     </div>
   );
@@ -494,7 +806,8 @@ const colors = {
 // Enhanced Styles with Animations
 const mainContainerStyle = {
   maxWidth: 1200,
-  margin: "0 auto",
+  minWidth: 520,
+    margin: "0 auto",
   padding: "2rem 1.5rem",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   animation: "fadeIn 0.3s ease-in",
@@ -567,7 +880,6 @@ const tdRight = {
 const trStyle = {
   borderTop: `1px solid ${colors.border}`,
   transition: "background-color 0.15s ease",
-  cursor: "default",
 };
 
 const modalOverlayStyle = {
@@ -828,6 +1140,10 @@ styleSheet.textContent = `
     background-color: ${colors.hover};
   }
   
+  tbody tr {
+    cursor: pointer;
+  }
+
   a:hover {
     opacity: 0.8;
   }
