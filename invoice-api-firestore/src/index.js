@@ -1,8 +1,6 @@
 ﻿import express from "express";
-import cors from "cors";
 import { Firestore } from "@google-cloud/firestore";
 import Joi from "joi";
-/** @typedef {import("cors").CorsOptions} CorsOptions */
 
 const app = express();
 
@@ -10,36 +8,37 @@ const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
   .split(",")
   .map(origin => origin.trim());
 
+console.log("=== INVOICE API BOOTED (manual CORS) ===");
 console.log("CORS_ORIGINS env:", process.env.CORS_ORIGINS);
 console.log("allowedOrigins array:", allowedOrigins);
 
 /**
- * Build CORS options for the API.
- * @returns {CorsOptions}
+ * Basic CORS middleware handling preflight.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
  */
-function getCorsOptions() {
-  return {
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT"],
-    allowedHeaders: ["Content-Type"],
-    optionsSuccessStatus: 204,
-  };
-}
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-app.use((req, _res, next) => {
-  console.log("Request:", req.method, req.path, "Origin:", req.headers.origin);
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
   next();
 });
 
-const corsOptions = getCorsOptions();
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
-// app.use(cors({ origin: allowedOrigins, methods: ["GET", "POST", "PUT"] })); // old version
 app.use(express.json());
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
 
 const db = new Firestore();
@@ -57,18 +56,16 @@ function getQuarter(isoDate) {
 }
 
 /**
- * List invoices with optional search on code or customerName.
+ * List invoices with optional search on customerName.
  * @param {string} [q] - Case-insensitive substring.
  * @returns {Promise<Array<object>>} Invoice docs (latest first).
  */
 async function listInvoices(q = "") {
   let query = col.orderBy("createdAt", "desc");
   if (q) {
-    // Firestore does not support case-insensitive `contains` or OR queries on different fields easily. 
-    // For a scalable solution, you would typically use a search service like Algolia or Elasticsearch,
-    // or duplicate data in lowercase fields to perform case-insensitive searches.
-    // This implementation is a simplified version.
-    query = query.where('customerName_lower', '>=', q.toLowerCase()).where('customerName_lower', '<=', q.toLowerCase() + '\uf8ff');
+    query = query
+      .where("customerName_lower", ">=", q.toLowerCase())
+      .where("customerName_lower", "<=", q.toLowerCase() + "\uf8ff");
   }
   const snap = await query.limit(200).get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -98,7 +95,7 @@ async function createInvoice(payload) {
     taxe: Joi.number().default(0),
     invoiceUrl: Joi.string().uri().allow("").default(""),
   });
-  
+
   const validatedPayload = await schema.validateAsync(payload);
 
   const now = new Date().toISOString();
@@ -120,16 +117,14 @@ async function createInvoice(payload) {
   return { id: ref.id, ...doc };
 }
 
-
 /**
  * Update an invoice document.
  *
  * @param {string} id - Firestore document ID.
- * @param {Partial<InvoicePayload>} payload - Fields to update.
+ * @param {object} payload - Fields to update.
  * @returns {Promise<object>} Updated document (with id).
  */
 async function updateInvoice(id, payload) {
-  // Allow partial updates
   const schema = Joi.object({
     code: Joi.string(),
     customerName: Joi.string(),
@@ -139,7 +134,7 @@ async function updateInvoice(id, payload) {
     vat: Joi.number(),
     taxe: Joi.number(),
     invoiceUrl: Joi.string().uri().allow(""),
-  }).min(1); // must send at least one field
+  }).min(1);
 
   const validated = await schema.validateAsync(payload);
 
@@ -152,11 +147,9 @@ async function updateInvoice(id, payload) {
 
   /** @type {any} */
   const existing = snap.data();
-
   /** @type {any} */
   const updates = { ...validated };
 
-  // Keep derived fields in sync
   if (typeof updates.customerName === "string") {
     updates.customerName_lower = updates.customerName.toLowerCase();
   }
@@ -210,4 +203,3 @@ app.put("/invoices/:id", async (req, res) => {
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => console.log(`API on :${port}`));
-
