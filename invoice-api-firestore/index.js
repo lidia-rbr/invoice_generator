@@ -2,11 +2,40 @@ import express from "express";
 import cors from "cors";
 import { Firestore } from "@google-cloud/firestore";
 import Joi from "joi";
+/** @typedef {import("cors").CorsOptions} CorsOptions */
 
 const app = express();
 
-const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173").split(",");
-app.use(cors({ origin: allowedOrigins, methods: ["GET", "POST", "PUT"] }));
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
+  .split(",")
+  .map(origin => origin.trim());
+
+console.log("CORS_ORIGINS env:", process.env.CORS_ORIGINS);
+console.log("allowedOrigins array:", allowedOrigins);
+
+/**
+ * Build CORS options for the API.
+ * @returns {CorsOptions}
+ */
+function getCorsOptions() {
+  return {
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT"],
+    allowedHeaders: ["Content-Type"],
+    optionsSuccessStatus: 204,
+  };
+}
+
+app.use((req, _res, next) => {
+  console.log("Request:", req.method, req.path, "Origin:", req.headers.origin);
+  next();
+});
+
+const corsOptions = getCorsOptions();
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+// app.use(cors({ origin: allowedOrigins, methods: ["GET", "POST", "PUT"] })); // old version
 app.use(express.json());
 
 process.on('unhandledRejection', (reason, promise) => {
