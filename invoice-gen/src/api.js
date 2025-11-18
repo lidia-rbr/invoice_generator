@@ -46,11 +46,22 @@ export async function createInvoice(payload) {
  * @returns {Promise<object>} The updated invoice.
  */
 export async function updateInvoice(id, payload) {
+  // Strip fields that should not be part of the update body
+  const {
+    id: _ignoreId,
+    createdAt: _ignoreCreatedAt,
+    updatedAt: _ignoreUpdatedAt,
+    customerName_lower: _ignoreLower,
+    quarter: _ignoreQuarter,
+    ...cleanPayload
+  } = payload || {};
+
   const res = await fetch(`${BASE_URL}/invoices/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(cleanPayload),
   });
+
   if (!res.ok) throw new Error(`Failed to update invoice: ${res.status}`);
   return res.json();
 }
