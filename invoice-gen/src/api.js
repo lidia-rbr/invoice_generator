@@ -46,16 +46,25 @@ export async function createInvoice(payload) {
  * @returns {Promise<object>} The updated invoice.
  */
 export async function updateInvoice(id, payload) {
-  // Strip fields that should not be part of the update body
-  const {
-    id: _ignoreId,
-    createdAt: _ignoreCreatedAt,
-    updatedAt: _ignoreUpdatedAt,
-    customerName_lower: _ignoreLower,
-    quarter: _ignoreQuarter,
-    tjm: _ignoreTjm, 
-    ...cleanPayload
-  } = payload || {};
+  const allowedKeys = [
+    "code",
+    "customerName",
+    "issueDate",
+    "paid",
+    "amountExcl",
+    "vat",
+    "taxe",
+    "invoiceUrl",
+  ];
+
+  /** @type {Record<string, unknown>} */
+  const cleanPayload = {};
+
+  for (const key of allowedKeys) {
+    if (Object.prototype.hasOwnProperty.call(payload, key) && payload[key] !== undefined) {
+      cleanPayload[key] = payload[key];
+    }
+  }
 
   const res = await fetch(`${BASE_URL}/invoices/${id}`, {
     method: "PUT",
