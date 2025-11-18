@@ -53,6 +53,7 @@ export async function updateInvoice(id, payload) {
     updatedAt: _ignoreUpdatedAt,
     customerName_lower: _ignoreLower,
     quarter: _ignoreQuarter,
+    tjm: _ignoreTjm, 
     ...cleanPayload
   } = payload || {};
 
